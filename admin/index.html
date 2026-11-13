@@ -459,7 +459,7 @@ async function renderPromo(){
       <button class="primary" onclick="promote('${a.id}')">정식 아티스트로 승격</button></div>
       <p class="muted" style="margin-top:8px">정규앨범: ${albums.map(r=>`「${esc(r.title)}」 ${r.release_date||""}`).join(", ")||"-"}</p></div>`;
   }).join("") + `<p class="muted">승격하면 탐색의 국내 목록으로 옮겨집니다. 템플릿 시트의 등급도 official로 바꿔야 다음 업로드 때 되돌아가지 않습니다.</p>`
-  : `<div class="empty">승격 후보가 없습니다<br><span class="muted">Rising 아티스트에 정규앨범이 등록되면 자동으로 올라옵니다.</span></div>`);
+  : `<div class="empty">승격 후보가 없습니다<br><span class="muted">Rising은 데뷔 2년이 지나면 매일 자동으로 정식 아티스트로 바뀌어, 이 목록은 더 쓰지 않습니다.</span></div>`);
 }
 async function promote(id){ try { await api.promote(id); toast("정식 아티스트로 승격했습니다"); go("promo"); } catch(e){ toast("실패: "+e.message); } }
 async function dismissPromo(id){ try { await api.dismissPromotion(id); toast("보류했습니다"); go("promo"); } catch(e){ toast("실패: "+e.message); } }
