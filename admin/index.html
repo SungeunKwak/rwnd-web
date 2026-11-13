@@ -1,0 +1,481 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>RWND Admin</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23111113'/%3E%3Ctext x='16' y='23' font-family='Arial' font-weight='900' font-size='20' text-anchor='middle' fill='%23e8432e'%3EN%3C/text%3E%3C/svg%3E">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
+<script src="config.js" onerror="window.RWND_CONFIG = null"></script>
+<style>
+  :root{--bg:#111113;--panel:#1b1b1f;--card:#24242a;--line:#33333b;--text:#f2f2f4;--sub:#9a9aa6;
+        --accent:#e8432e;--accent2:#f5b62a;--rising:#4fc3a1;--blue:#5b8def}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font:14px/1.5 -apple-system,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;min-height:100vh}
+  button,input,select,textarea{font:inherit;color:inherit}
+  button{cursor:pointer;border:0;border-radius:8px;padding:8px 14px;background:var(--card);font-weight:600}
+  button:hover{filter:brightness(1.15)} button:disabled{opacity:.4;cursor:default}
+  .primary{background:var(--accent);color:#fff} .warn{background:var(--accent2);color:#111} .ghost{background:transparent;border:1px solid var(--line)}
+  input,select,textarea{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%}
+  textarea{resize:vertical;min-height:64px}
+  label{display:block;font-size:12px;color:var(--sub);margin:12px 0 4px}
+  .bar{display:flex;align-items:center;gap:6px;padding:10px 20px;background:var(--panel);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5;flex-wrap:wrap}
+  .logo{font-weight:900;font-size:18px;letter-spacing:1px;margin-right:14px} .logo b{color:var(--accent)}
+  .tab{background:transparent;color:var(--sub);padding:6px 12px} .tab.on{color:var(--text);background:var(--card)}
+  .cnt{display:inline-block;min-width:18px;padding:0 6px;margin-left:4px;border-radius:10px;background:var(--accent);color:#fff;font-size:11px;text-align:center}
+  .cnt.zero{background:var(--line);color:var(--sub)}
+  .spacer{flex:1} .who{color:var(--sub);font-size:12px}
+  .demo{background:var(--accent2);color:#111;font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px}
+  main{padding:20px;max-width:1400px;margin:0 auto}
+  .grid{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:20px;align-items:start}
+  @media(max-width:900px){.grid{grid-template-columns:1fr}}
+  table{width:100%;border-collapse:collapse;background:var(--panel);border-radius:12px;overflow:hidden}
+  th{text-align:left;font-size:11px;color:var(--sub);font-weight:600;padding:10px;border-bottom:1px solid var(--line)}
+  td{padding:10px;border-bottom:1px solid var(--line);vertical-align:top}
+  tr.row{cursor:pointer} tr.row:hover td{background:#202026} tr.sel td{background:#2a1d1b}
+  .pill{display:inline-block;font-size:11px;font-weight:700;padding:1px 8px;border-radius:20px;background:var(--line);color:var(--sub);white-space:nowrap}
+  .c-release,.c-mv,.c-teaser{background:var(--accent);color:#fff} .c-concert{background:var(--accent2);color:#111} .c-merch{background:var(--blue);color:#fff}
+  .intl{border:1px solid var(--line);color:var(--sub);background:transparent}
+  .old{background:#3a2a10;color:var(--accent2);border:1px solid #6b4d14}
+  .oldbox{margin-top:10px;padding:8px 10px;border-radius:8px;background:#2b2110;border:1px solid #6b4d14;color:var(--accent2);font-size:12px}
+  .side{background:var(--panel);border-radius:12px;padding:16px;position:sticky;top:70px}
+  .side h3{font-size:14px;margin-bottom:4px}
+  .muted{color:var(--sub);font-size:12px}
+  .cats{display:flex;flex-wrap:wrap;gap:6px}
+  .cats button{padding:5px 10px;font-size:12px} .cats button.on{outline:2px solid var(--text)}
+  .acts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px}
+  .empty{text-align:center;color:var(--sub);padding:60px 20px;background:var(--panel);border-radius:12px}
+  .card{background:var(--panel);border-radius:12px;padding:16px;margin-bottom:12px}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .days{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+  .day{background:var(--panel);border-radius:10px;padding:10px;min-height:110px}
+  .day h4{font-size:12px;color:var(--sub);margin-bottom:6px;display:flex;justify-content:space-between}
+  .day.today{outline:1px solid var(--accent)} .slot{font-size:12px;background:var(--card);border-radius:6px;padding:6px 8px;margin-bottom:4px;display:flex;gap:6px;align-items:center}
+  .slot .x{margin-left:auto;background:transparent;padding:0 4px;color:var(--sub)}
+  .slot.rp{border-left:3px solid var(--rising)} .slot.tr{border-left:3px solid var(--accent)}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--text);color:#111;padding:10px 18px;border-radius:10px;font-weight:600;opacity:0;transition:.2s;pointer-events:none;z-index:20}
+  .toast.show{opacity:1}
+  .login{max-width:360px;margin:12vh auto;background:var(--panel);border-radius:14px;padding:28px}
+  .login h1{font-size:24px;margin-bottom:4px}
+  kbd{background:var(--card);border:1px solid var(--line);border-radius:4px;padding:0 5px;font-size:11px}
+  .hint{margin-top:14px;font-size:11px;color:var(--sub);line-height:1.9}
+  a{color:var(--blue)}
+  .err{color:#ff7b6b;font-size:13px;margin-top:10px;white-space:pre-wrap}
+  .apick{max-height:240px;overflow:auto;border:1px solid var(--line);border-radius:8px;margin-top:6px;background:var(--bg)}
+  .apick label{display:flex;align-items:center;gap:8px;margin:0;padding:9px 10px;color:var(--text);font-size:14px;border-bottom:1px solid var(--line);cursor:pointer}
+  .apick input{width:auto} .apick .slug{color:var(--sub);font-size:11px;margin-left:auto}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px} .chips span{background:var(--accent);color:#fff;border-radius:20px;padding:3px 10px;font-size:12px;cursor:pointer}
+  .catbtns{display:flex;flex-wrap:wrap;gap:6px} .catbtns button{padding:8px 12px} .catbtns button.on{outline:2px solid var(--text)}
+  @media(max-width:600px){main{padding:12px}.row2{grid-template-columns:1fr}.bar{padding:8px 12px}.logo{margin-right:6px}.who{display:none}
+    input,select,textarea{font-size:16px}}  /* 16px 미만이면 아이폰이 입력 시 화면을 확대함 */
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ---------------------------------------------------------------------------
+// 데이터 계층: Supabase(실서비스) / Demo(?demo=1, 화면 확인용 예시 데이터)
+// ---------------------------------------------------------------------------
+const CATS = [["release","신보"],["mv","MV"],["teaser","티저"],["concert","공연"],["merch","굿즈"],["notice","공지"]];
+const CAT_LABEL = Object.fromEntries(CATS);
+const SRC_LABEL = {youtube:"YouTube",website:"홈페이지",spotify:"Spotify",instagram:"Instagram",x:"X",ticket:"예매처",manual:"RWND",user_report:"제보",
+                   store:"굿즈샵",apple_music:"Apple Music",threads:"Threads",tiktok:"TikTok",bluesky:"Bluesky"};
+// 링크 등록 시 주소로 출처 자동 선택
+const guessSource = u => { const h = (()=>{ try { return new URL(u).hostname.replace(/^www\./,""); } catch { return ""; } })();
+  return /instagram\.com/.test(h) ? "instagram" : /(^|\.)(x|twitter)\.com$/.test(h) ? "x" : /threads\.(net|com)/.test(h) ? "threads"
+       : /tiktok\.com/.test(h) ? "tiktok" : /youtube\.com|youtu\.be/.test(h) ? "youtube" : /bsky\.app/.test(h) ? "bluesky"
+       : /ticket|interpark|yes24|melon/.test(h) ? "ticket" : h ? "website" : ""; };
+// 공유 링크의 추적용 파라미터 제거 (같은 게시물이 중복 등록되지 않게)
+const cleanUrl = u => { try { const x = new URL(u.trim());
+  [...x.searchParams.keys()].forEach(k => { if (/^(utm_|igsh|igshid|si$|s$|t$|fbclid|ref|mibextid|is_from_webapp|sender_device|_r$|_t$)/.test(k)) x.searchParams.delete(k); });
+  x.hash = ""; return x.toString(); } catch { return u.trim(); } };
+// 주소에서 SNS 계정명 추출 → 아티스트 자동 선택 (Instagram 게시물 주소에는 계정명이 없어 직접 선택)
+const RESERVED = /^(p|reel|reels|tv|stories|explore|i|home|search|hashtag|intent|share|watch|channel|c|user|shorts|playlist|status|post|video|t)$/i;
+const handleOf = u => { try { const x = new URL(u), h = x.hostname.replace(/^(www|m|mobile|vm)\./,""), seg = x.pathname.split("/").filter(Boolean);
+  const first = (seg[0]||"").replace(/^@/,"");
+  if (!first || RESERVED.test(first)) return null;
+  const fam = /instagram/.test(h)?"instagram":/^(x|twitter)\.com$/.test(h)?"x":/threads/.test(h)?"threads":/tiktok/.test(h)?"tiktok":/youtube/.test(h)?"youtube":/bsky/.test(h)?"bluesky":null;
+  if (fam==="bluesky") return seg[1] ? {fam, h: seg[1].toLowerCase()} : null;
+  return fam ? {fam, h: first.toLowerCase()} : null; } catch { return null; } };
+const PARAMS = new URLSearchParams(location.search);
+let SHARED = PARAMS.get("add") || PARAMS.get("url") || ((PARAMS.get("text")||"").match(/https?:\/\/\S+/)||[])[0] || "";
+const DEMO = PARAMS.has("demo");
+const iso = d => d.toISOString().slice(0,10);
+const addDays = (d,n) => { const x = new Date(d); x.setDate(x.getDate()+n); return x; };
+
+function supaApi(cfg){
+  const sb = supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_KEY);
+  const ok = ({data,error}) => { if (error) throw new Error(error.message); return data; };
+  return {
+    async session(){ return (await sb.auth.getSession()).data.session; },
+    async login(email,password){ ok(await sb.auth.signInWithPassword({email,password})); },
+    async logout(){ await sb.auth.signOut(); },
+    async isAdmin(){ return ok(await sb.rpc("is_admin")); },
+    async counts(){
+      const [q,p,r] = await Promise.all([
+        sb.from("news_items").select("id",{count:"exact",head:true}).eq("status","pending"),
+        sb.from("artists").select("id",{count:"exact",head:true}).eq("promotion_pending",true),
+        sb.from("user_reports").select("id",{count:"exact",head:true}).eq("status","open")]);
+      return {queue:q.count||0, promo:p.count||0, reports:r.count||0};
+    },
+    async queue(){ return ok(await sb.from("v_review_queue").select("*").limit(200)); },
+    async recent(){ return ok(await sb.from("news_items").select("id,title,title_ko,category,status,reviewed_at").neq("status","pending").not("reviewed_at","is",null).order("reviewed_at",{ascending:false}).limit(15)); },
+    async updateNews(id,fields){ ok(await sb.from("news_items").update(fields).eq("id",id)); },
+    async addNews(row, artistIds){
+      const n = ok(await sb.from("news_items").insert(row).select("id").single());
+      if (artistIds.length) ok(await sb.from("news_artists").insert(artistIds.map(a => ({news_id: n.id, artist_id: a}))));
+      return n;
+    },
+    async addKeyword(category,keyword,lang){ ok(await sb.from("keyword_rules").upsert({category,keyword,lang,priority:30,is_active:true},{onConflict:"category,keyword",ignoreDuplicates:true})); },
+    async artists(){ return ok(await sb.from("artists").select("id,slug,name,name_ko,name_en,tier,region,official_links").order("name")); },
+    async curations(from,to){ return ok(await sb.from("curations").select("*, artist:artists(name,name_ko,slug)").gte("curate_date",from).lte("curate_date",to).order("curate_date").order("slot").order("sort_order")); },
+    async addCuration(row){ ok(await sb.from("curations").insert(row)); },
+    async deleteCuration(id){ ok(await sb.from("curations").delete().eq("id",id)); },
+    async promotions(){ return ok(await sb.from("artists").select("id,slug,name,name_ko,tier,releases(title,type,release_date)").eq("promotion_pending",true)); },
+    async promote(id){ ok(await sb.from("artists").update({tier:"official"}).eq("id",id)); },
+    async dismissPromotion(id){ ok(await sb.from("artists").update({promotion_pending:false}).eq("id",id)); },
+    async reports(){ return ok(await sb.from("user_reports").select("*, artist:artists(name,name_ko,slug)").eq("status","open").order("created_at")); },
+    async closeReport(id,status,admin_note){ ok(await sb.from("user_reports").update({status,admin_note,resolved_at:new Date().toISOString()}).eq("id",id)); },
+  };
+}
+
+function demoApi(){
+  const now = Date.now(), h = n => new Date(now - n*3600e3).toISOString();
+  const A = [{id:"a1",slug:"D00001",name:"예시밴드 A",tier:"official",region:"domestic",official_links:{instagram:"https://www.instagram.com/example_a/",x:"https://x.com/example_a"}},{id:"a2",slug:"I00001",name:"Example Band G",tier:"official",region:"international"},
+             {id:"r1",slug:"R00001",name:"루키밴드 C",tier:"rising",region:"domestic",promotion_pending:true}];
+  let news = [
+    {id:"n1",collected_at:h(1),published_at:h(2),source_type:"youtube",auto_category:"mv",category:"mv",title:"New single – Official Music Video",title_ko:null,summary_ko:null,url:"https://example.com/1",artist_names:["Example Band G"],needs_summary:true,status:"pending"},
+    {id:"n2",collected_at:h(2),published_at:h(3),source_type:"website",auto_category:"concert",category:"concert",title:"[공지] 전국투어 서울 공연 티켓 오픈 안내",url:"https://example.com/2",artist_names:["예시밴드 A"],needs_summary:false,status:"pending"},
+    {id:"n3",collected_at:h(3),published_at:h(5),source_type:"manual",auto_category:"release",category:"release",title:"🎉 루키밴드 C 첫 정규앨범 「예시」",url:"rwnd://releases/x",artist_names:["루키밴드 C"],needs_summary:false,status:"pending"},
+    {id:"n6",collected_at:h(4),published_at:h(4),source_type:"website",auto_category:"merch",category:"merch",title:"CHRISTMAS IN ROOM 2024 포스터 세트",url:"https://example.com/6",artist_names:["예시밴드 A"],needs_summary:false,status:"pending"},
+    {id:"n4",collected_at:h(4),published_at:h(6),source_type:"website",auto_category:"notice",category:"notice",title:"10주년 기념 한정 티셔츠 판매 오픈",url:"https://example.com/4",artist_names:["예시밴드 A"],needs_summary:false,status:"pending"},
+    {id:"n5",collected_at:h(5),published_at:h(9),source_type:"youtube",auto_category:"notice",category:"notice",title:"Behind the scenes",url:"https://example.com/5",artist_names:["예시밴드 A"],needs_summary:false,status:"pending"},
+  ];
+  let cur = [{id:"c1",curate_date:iso(new Date()),slot:"today_rock",sort_order:1,artist_id:"a1",headline:"거친 기타와 서정적인 멜로디",artist:A[0]}];
+  let reports = [{id:"u1",created_at:h(20),target:"member",message:"멤버2가 작년에 탈퇴했어요.",artist:A[0],status:"open"}];
+  const wait = v => new Promise(r => setTimeout(() => r(v), 120));
+  let logged = true;  // 예시 모드는 로그인 생략
+  return {
+    async session(){ return logged ? {user:{email:"admin@demo"}} : null; },
+    async login(){ logged = true; }, async logout(){ logged = false; }, async isAdmin(){ return true; },
+    async counts(){ return wait({queue:news.filter(n=>n.status==="pending").length, promo:A.filter(a=>a.promotion_pending).length, reports:reports.filter(r=>r.status==="open").length}); },
+    async queue(){ return wait(news.filter(n=>n.status==="pending")); },
+    async recent(){ return wait(news.filter(n=>n.status!=="pending").sort((a,b)=>b.reviewed_at.localeCompare(a.reviewed_at))); },
+    async updateNews(id,f){ const n = news.find(x=>x.id===id); Object.assign(n,f); if (f.status) n.reviewed_at = new Date().toISOString(); return wait(); },
+    async addNews(row, ids){ if (news.some(n=>n.url===row.url)) throw new Error("이미 등록된 주소입니다"); news.push({...row, id:"n"+Math.random(), artist_names: A.filter(a=>ids.includes(a.id)).map(a=>a.name), collected_at:new Date().toISOString(), reviewed_at:new Date().toISOString()}); return wait(); },
+    async addKeyword(){ return wait(); },
+    async artists(){ return wait(A); },
+    async curations(){ return wait(cur); },
+    async addCuration(row){ cur.push({...row,id:"c"+Math.random(),artist:A.find(a=>a.id===row.artist_id)}); return wait(); },
+    async deleteCuration(id){ cur = cur.filter(c=>c.id!==id); return wait(); },
+    async promotions(){ return wait(A.filter(a=>a.promotion_pending).map(a=>({...a,releases:[{title:"첫 EP",type:"ep",release_date:"2025-03-01"},{title:"첫 정규",type:"album",release_date:"2026-11-01"}]}))); },
+    async promote(id){ const a = A.find(x=>x.id===id); a.tier="official"; a.promotion_pending=false; return wait(); },
+    async dismissPromotion(id){ A.find(x=>x.id===id).promotion_pending=false; return wait(); },
+    async reports(){ return wait(reports.filter(r=>r.status==="open")); },
+    async closeReport(id,status){ reports.find(r=>r.id===id).status = status; return wait(); },
+  };
+}
+
+// ---------------------------------------------------------------------------
+// 화면
+// ---------------------------------------------------------------------------
+const $app = document.getElementById("app");
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const ago = t => { const m = Math.round((Date.now()-new Date(t))/60000); return m<60?`${m}분 전`:m<1440?`${Math.round(m/60)}시간 전`:`${Math.round(m/1440)}일 전`; };
+const nameOf = a => a ? (a.name_ko || a.name) : "-";
+// 제목에 올해보다 이전 연도(1950~작년)가 있으면 반환. 예: '… 2024 포스터 세트' → [2024]
+const pastYears = t => { const now = new Date().getFullYear();
+  return [...new Set((String(t||"").match(/(?<!\d)(19[5-9]\d|20\d\d)(?!\d)/g) || []).map(Number))].filter(y => y < now); };
+const oldBadge = t => { const ys = pastYears(t); return ys.length ? ` <span class="pill old" title="제목에 지난 연도가 있습니다. 오래된 소식인지 확인하세요">⚠️ ${ys.join(", ")}</span>` : ""; };
+function toast(msg){ const t = document.getElementById("toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(t._h); t._h = setTimeout(()=>t.classList.remove("show"),1800); }
+
+let api, state = {tab: SHARED ? "manual" : "queue", counts:{queue:0,promo:0,reports:0}, queue:[], sel:0, edit:null, user:null};
+
+async function boot(){
+  if (DEMO) api = demoApi();
+  else if (!window.RWND_CONFIG || !window.RWND_CONFIG.SUPABASE_URL) {
+    $app.innerHTML = `<div class="login"><h1>설정 필요</h1><p class="muted">admin/config.js가 없습니다. README의 '처음 설정'을 따라 만들어 주세요.<br><br>화면만 보려면 <a href="?demo=1">예시 데이터 모드</a>로 열 수 있습니다.</p></div>`;
+    return;
+  } else api = supaApi(window.RWND_CONFIG);
+  const s = await api.session();
+  if (!s) return renderLogin();
+  state.user = s.user;
+  if (!(await api.isAdmin())) {
+    $app.innerHTML = `<div class="login"><h1>권한 없음</h1><p class="muted">${esc(s.user.email)} 계정은 운영자(admins)로 등록되어 있지 않습니다.</p><button class="ghost" style="margin-top:16px" onclick="api.logout().then(()=>location.reload())">로그아웃</button></div>`;
+    return;
+  }
+  go(state.tab);
+}
+
+function renderLogin(err){
+  $app.innerHTML = `<form class="login" id="lf">
+    <h1>RW<span style="color:var(--accent)">N</span>D Admin</h1>
+    <p class="muted">Supabase 운영자 계정으로 로그인</p>
+    <label>이메일</label><input name="email" type="email" autocomplete="username" required>
+    <label>비밀번호</label><input name="password" type="password" autocomplete="current-password" required>
+    <button class="primary" style="width:100%;margin-top:18px">로그인</button>
+    ${err ? `<div class="err">${esc(err)}</div>` : ""}
+    ${DEMO ? `<p class="hint">예시 데이터 모드: 아무 값이나 입력하세요.</p>` : ""}
+  </form>`;
+  document.getElementById("lf").onsubmit = async e => {
+    e.preventDefault(); const f = new FormData(e.target);
+    try { await api.login(f.get("email"), f.get("password")); boot(); }
+    catch (x) { renderLogin("로그인 실패: " + x.message); }
+  };
+}
+
+function shell(body){
+  const c = state.counts, tab = (id,label,n) =>
+    `<button class="tab ${state.tab===id?"on":""}" onclick="go('${id}')">${label}${n===undefined?"":`<span class="cnt ${n?"":"zero"}">${n}</span>`}</button>`;
+  $app.innerHTML = `<div class="bar"><div class="logo">RW<b>N</b>D</div>
+    ${tab("queue","검수 큐",c.queue)}${tab("manual","링크로 소식 등록")}${tab("curation","큐레이션 편성")}${tab("promo","승격 후보",c.promo)}${tab("reports","제보",c.reports)}
+    <div class="spacer"></div>${DEMO?'<span class="demo">예시 데이터</span>':""}<span class="who">${esc(state.user?.email||"")}</span>
+    <button class="ghost" onclick="api.logout().then(()=>location.reload())">로그아웃</button></div><main id="main">${body}</main>`;
+}
+
+async function go(tab){
+  state.tab = tab;
+  state.counts = await api.counts();
+  ({queue:renderQueue, manual:renderManual, curation:renderCuration, promo:renderPromo, reports:renderReports})[tab]();
+}
+
+// ---- 검수 큐 --------------------------------------------------------------
+async function renderQueue(keepSel){
+  state.queue = await api.queue();
+  if (!keepSel) state.sel = 0;
+  state.sel = Math.min(state.sel, Math.max(state.queue.length-1, 0));
+  const recent = await api.recent();
+  const rows = state.queue.map((n,i) => `<tr class="row ${i===state.sel?"sel":""}" onclick="pick(${i})">
+      <td class="muted" style="white-space:nowrap">${ago(n.collected_at)}</td>
+      <td>${esc((n.artist_names||[]).join(", ")||"-")}${n.needs_summary?' <span class="pill intl">해외</span>':""}</td>
+      <td>${esc(n.title)}${oldBadge(n.title)}</td>
+      <td><span class="pill c-${n.category}">${CAT_LABEL[n.category]}</span>${n.auto_category&&n.auto_category!==n.category?` <span class="muted">(자동: ${CAT_LABEL[n.auto_category]})</span>`:""}</td>
+      <td class="muted">${SRC_LABEL[n.source_type]||n.source_type}</td></tr>`).join("");
+  const recentHtml = recent.length ? `<div class="card" style="margin-top:20px"><h3 style="font-size:13px;margin-bottom:8px">최근 처리</h3>
+      ${recent.map(n=>`<div style="display:flex;gap:8px;align-items:center;padding:4px 0;border-bottom:1px solid var(--line)">
+        <span class="pill ${n.status==="approved"?"c-concert":""}">${n.status==="approved"?"승인":"반려"}</span>
+        <span style="flex:1;font-size:13px">${esc(n.title_ko||n.title)}</span>
+        <button class="ghost" style="padding:3px 10px;font-size:12px" onclick="undo('${n.id}')">되돌리기</button></div>`).join("")}</div>` : "";
+  shell(`<div class="grid"><div>
+      ${state.queue.length ? `<table><tr><th>수집</th><th>아티스트</th><th>제목</th><th>분류</th><th>출처</th></tr>${rows}</table>`
+                           : `<div class="empty">🎸 검수할 소식이 없습니다</div>`}
+      ${recentHtml}</div>
+      <div id="side"></div></div>`);
+  renderSide();
+}
+
+function renderSide(){
+  const n = state.queue[state.sel], el = document.getElementById("side");
+  if (!el) return;
+  if (!n) { el.innerHTML = ""; return; }
+  state.edit = {category:n.category, title_ko:n.title_ko||"", summary_ko:n.summary_ko||""};
+  el.innerHTML = `<div class="side">
+    <h3>${esc(n.title)}</h3>
+    ${pastYears(n.title).length ? `<div class="oldbox">⚠️ 제목에 지난 연도(${pastYears(n.title).join(", ")})가 있습니다. 오래된 상품·소식이면 <b>반려(R)</b>하세요. 기념 공연·재발매처럼 새 소식일 수도 있으니 원문을 확인하세요.</div>` : ""}
+    <div class="muted">${esc((n.artist_names||[]).join(", "))} · ${SRC_LABEL[n.source_type]||n.source_type} · 게시 ${ago(n.published_at)}</div>
+    ${n.url.startsWith("http")?`<a href="${esc(n.url)}" target="_blank" rel="noopener" style="font-size:12px">원문 열기 ↗</a>`:""}
+    <label>분류 <span class="muted">(숫자키 1~6)</span></label>
+    <div class="cats">${CATS.map(([k,v],i)=>`<button class="${k===n.category?"on":""} c-${k}" onclick="setCat('${k}')">${i+1} ${v}</button>`).join("")}</div>
+    <label>한국어 제목 ${n.needs_summary?'<b style="color:var(--accent2)">· 해외 소식, 입력 권장</b>':'<span class="muted">(선택)</span>'}</label>
+    <input id="tko" value="${esc(state.edit.title_ko)}" placeholder="비우면 원문 제목 표시">
+    <label>한 줄 요약 <span class="muted">(선택)</span></label>
+    <textarea id="sko" placeholder="앱 카드에 표시되는 짧은 설명">${esc(state.edit.summary_ko)}</textarea>
+    <div class="acts"><button class="primary" onclick="decide('approved')">승인 <kbd>A</kbd></button>
+      <button onclick="decide('rejected')">반려 <kbd>R</kbd></button></div>
+    <details style="margin-top:16px"><summary class="muted" style="cursor:pointer">분류 키워드 추가 (다음부터 자동 분류)</summary>
+      <div class="row2" style="margin-top:8px"><input id="kw" placeholder="예: 쇼케이스">
+        <select id="kwc">${CATS.map(([k,v])=>`<option value="${k}" ${k===n.category?"selected":""}>${v}</option>`).join("")}</select></div>
+      <button class="ghost" style="margin-top:8px;width:100%" onclick="addKw()">키워드 추가</button></details>
+    <p class="hint"><kbd>J</kbd>/<kbd>K</kbd> 이동 · <kbd>A</kbd> 승인 · <kbd>R</kbd> 반려 · <kbd>1</kbd>~<kbd>6</kbd> 분류 · <kbd>O</kbd> 원문</p>
+  </div>`;
+}
+
+function pick(i){ state.sel = i; document.querySelectorAll("tr.row").forEach((r,j)=>r.classList.toggle("sel", j===i)); renderSide(); }
+function setCat(k){
+  const n = state.queue[state.sel]; if (!n) return;
+  // 입력 중인 한국어 제목·요약을 잃지 않도록 먼저 보관
+  const t = document.getElementById("tko"), s = document.getElementById("sko");
+  if (t) n.title_ko = t.value; if (s) n.summary_ko = s.value;
+  n.category = k; renderSide(); const td = document.querySelectorAll("tr.row")[state.sel]?.children[3]; if (td) td.innerHTML = `<span class="pill c-${k}">${CAT_LABEL[k]}</span>`; }
+async function decide(status){
+  const n = state.queue[state.sel]; if (!n) return;
+  const fields = {status, category:n.category,
+    title_ko: document.getElementById("tko").value.trim() || null,
+    summary_ko: document.getElementById("sko").value.trim() || null};
+  try { await api.updateNews(n.id, fields); toast(status==="approved"?"승인했습니다":"반려했습니다");
+        state.counts = await api.counts(); renderQueue(true); }
+  catch (e) { toast("실패: " + e.message); }
+}
+async function undo(id){ try { await api.updateNews(id,{status:"pending"}); toast("검수 대기로 되돌렸습니다"); go("queue"); } catch(e){ toast("실패: "+e.message); } }
+async function addKw(){
+  const k = document.getElementById("kw").value.trim(), c = document.getElementById("kwc").value;
+  if (!k) return;
+  try { await api.addKeyword(c, k, /^[\x00-\x7f]+$/.test(k) ? "en" : "ko"); toast(`'${k}' → ${CAT_LABEL[c]} 키워드 추가`); document.getElementById("kw").value=""; }
+  catch(e){ toast("실패: "+e.message); }
+}
+document.addEventListener("keydown", e => {
+  // 검수 화면이 실제로 떠 있을 때만 단축키 동작 (로그인·설정 화면 제외)
+  if (state.tab!=="queue" || !document.getElementById("side") || !state.queue.length) return;
+  if (["INPUT","TEXTAREA","SELECT"].includes(e.target.tagName) || e.metaKey || e.ctrlKey || e.altKey) return;
+  const k = e.key.toLowerCase();
+  if (k==="j") pick(Math.min(state.sel+1, state.queue.length-1));
+  else if (k==="k") pick(Math.max(state.sel-1, 0));
+  else if (k==="a") decide("approved");
+  else if (k==="r") decide("rejected");
+  else if (k==="o") { const n = state.queue[state.sel]; if (n?.url.startsWith("http")) window.open(n.url, "_blank", "noopener"); }
+  else if (/^[1-6]$/.test(k)) setCat(CATS[+k-1][0]);
+  else return;
+  e.preventDefault();
+});
+
+// ---- 링크로 소식 등록 (Instagram·X·Threads·TikTok 등 자동 수집이 안 되는 곳) ----
+// 아이폰: 공유 메뉴 → 단축어 'RWND에 등록' → 이 화면이 ?add=게시물주소 로 열림
+const RECENT_KEY = "rwnd_admin_recent_artists";
+const recentIds = () => { try { return JSON.parse(localStorage.getItem(RECENT_KEY)) || []; } catch { return []; } };
+const saveRecent = ids => { try { localStorage.setItem(RECENT_KEY, JSON.stringify([...new Set([...ids, ...recentIds()])].slice(0, 12))); } catch {} };
+const norm = t => String(t||"").toLowerCase().replace(/[\s\-_.!']/g, "");
+
+async function renderManual(prefill){
+  const artists = await api.artists();
+  const byId = Object.fromEntries(artists.map(a => [a.id, a]));
+  const url0 = cleanUrl(prefill ?? SHARED ?? "");
+  const now = new Date(Date.now() - new Date().getTimezoneOffset()*60000).toISOString().slice(0,16);
+  const picked = new Set();
+  let category = "notice";
+  shell(`<div class="grid"><form class="card" id="mf" style="max-width:640px">
+      <h3 style="font-size:15px;margin-bottom:4px">링크로 소식 등록</h3>
+      <p class="muted">Instagram·X·Threads·TikTok처럼 자동 수집이 안 되는 게시물을 주소로 등록합니다.</p>
+      <label>게시물 주소</label><input name="url" id="murl" type="url" required placeholder="https://www.instagram.com/p/…" value="${esc(url0)}">
+      <div id="mdup" class="muted"></div>
+      <label>아티스트 <span class="muted" id="mauto"></span></label>
+      <div class="chips" id="mchips"></div>
+      <input id="mq" placeholder="이름으로 찾기 (한글·영문)" autocomplete="off">
+      <div class="apick" id="mlist"></div>
+      <label>분류</label>
+      <div class="catbtns" id="mcats">${CATS.map(([k,v])=>`<button type="button" data-k="${k}" class="c-${k}">${v}</button>`).join("")}</div>
+      <label>제목</label><input name="title" required placeholder="한 줄로 (예: 단독공연 티켓 오픈 안내)">
+      <details><summary class="muted" style="cursor:pointer;margin-top:12px">더 보기 (요약·출처·시각·상태)</summary>
+        <label>한 줄 요약 <span class="muted">(선택)</span></label><textarea name="summary_ko"></textarea>
+        <div class="row2"><div><label>출처 <span class="muted">(주소로 자동 선택)</span></label>
+          <select name="source_type" id="msrc">${Object.entries(SRC_LABEL).filter(([k])=>!["manual","user_report","spotify","apple_music"].includes(k)).map(([k,v])=>`<option value="${k}">${v}</option>`).join("")}</select></div>
+          <div><label>게시 시각</label><input name="published_at" type="datetime-local" value="${now}" required></div></div>
+        <label>상태</label><select name="status"><option value="approved">바로 앱에 노출 (승인)</option><option value="pending">검수 큐로 보내기</option></select>
+      </details>
+      <button class="primary" style="width:100%;margin-top:16px;padding:12px">등록</button></form></div>`);
+
+  const $ = id => document.getElementById(id);
+  const drawChips = () => { $("mchips").innerHTML = [...picked].map(id => `<span data-id="${id}">${esc(nameOf(byId[id]))} ✕</span>`).join("")
+    || `<span style="background:var(--line);color:var(--sub);cursor:default">선택 안 함</span>`; };
+  const drawList = () => {
+    const q = norm($("mq").value), rec = recentIds();
+    let list = q ? artists.filter(a => [a.name, a.name_ko, a.name_en, a.slug].some(n => norm(n).includes(q)))
+                 : rec.map(id => byId[id]).filter(Boolean);
+    $("mlist").innerHTML = (!q && list.length ? `<div class="muted" style="padding:6px 10px">최근 등록한 아티스트</div>` : "")
+      + list.slice(0, 50).map(a => `<label><input type="checkbox" data-id="${a.id}" ${picked.has(a.id)?"checked":""}>${esc(nameOf(a))}<span class="slug">${a.slug}</span></label>`).join("")
+      + (!list.length ? `<div class="muted" style="padding:10px">${q ? "찾는 아티스트가 없습니다" : "이름을 입력해 찾으세요"}</div>` : "");
+  };
+  const toggle = (id, on) => { on ? picked.add(id) : picked.delete(id); drawChips(); drawList(); };
+  const setCat = k => { category = k; document.querySelectorAll("#mcats button").forEach(b => b.classList.toggle("on", b.dataset.k === k)); };
+  const onUrl = () => {
+    const u = $("murl").value; const g = guessSource(u); if (g) $("msrc").value = g;
+    const hd = handleOf(u); $("mauto").textContent = "";
+    if (hd) {
+      const hit = artists.filter(a => Object.values(a.official_links || {}).some(l => { const o = handleOf(l); return o && o.fam === hd.fam && o.h === hd.h; }));
+      if (hit.length) { hit.forEach(a => picked.add(a.id)); $("mauto").textContent = `· @${hd.h} 계정으로 자동 선택`; }
+      else $("mauto").textContent = `· @${hd.h} 계정이 등록된 아티스트가 없습니다`;
+    } else if (/instagram/.test(u)) $("mauto").textContent = "· Instagram 게시물 주소에는 계정명이 없어 직접 선택";
+    drawChips(); drawList();
+  };
+  $("mq").addEventListener("input", drawList);
+  $("mlist").addEventListener("change", e => { if (e.target.dataset.id) toggle(e.target.dataset.id, e.target.checked); });
+  $("mchips").addEventListener("click", e => { if (e.target.dataset.id) toggle(e.target.dataset.id, false); });
+  $("mcats").addEventListener("click", e => { if (e.target.dataset.k) setCat(e.target.dataset.k); });
+  $("murl").addEventListener("input", onUrl);
+  $("murl").addEventListener("blur", () => { $("murl").value = cleanUrl($("murl").value); });
+  setCat(category); onUrl();
+  if (url0 && !picked.size) $("mq").focus();
+
+  const f = $("mf");
+  f.onsubmit = async e => {
+    e.preventDefault(); const d = new FormData(f);
+    if (!picked.size) { toast("아티스트를 한 팀 이상 선택하세요"); return; }
+    const url = cleanUrl(d.get("url"));
+    const row = {url, source_type: d.get("source_type"), category, auto_category: category, status: d.get("status"),
+      title: d.get("title").trim(), summary_ko: (d.get("summary_ko")||"").trim() || null, published_at: new Date(d.get("published_at")).toISOString(),
+      external_id: url};
+    try {
+      await api.addNews(row, [...picked]); saveRecent([...picked]); toast("등록했습니다");
+      if (SHARED) { SHARED = ""; history.replaceState(null, "", location.pathname + (DEMO ? "?demo=1" : "")); }  // 새로고침해도 다시 채워지지 않게
+      state.counts = await api.counts(); renderManual("");
+    } catch(x){ toast(/duplicate|unique/i.test(x.message) ? "이미 등록된 주소입니다" : "실패: " + x.message); }
+  };
+}
+
+// ---- 큐레이션 편성 ---------------------------------------------------------
+async function renderCuration(){
+  const today = new Date(), from = iso(today), to = iso(addDays(today,13));
+  const [list, artists] = await Promise.all([api.curations(from,to), api.artists()]);
+  state.artists = artists;
+  const days = [...Array(14)].map((_,i)=>iso(addDays(today,i)));
+  const wd = d => "일월화수목금토"[new Date(d+"T00:00").getDay()];
+  const dayHtml = days.map(d => {
+    const items = list.filter(c=>c.curate_date===d);
+    return `<div class="day ${d===from?"today":""}"><h4><span>${d.slice(5).replace("-",".")} (${wd(d)})${d===from?" · 오늘":""}</span>
+        <span>${items.some(c=>c.slot==="today_rock")?"":'<span style="color:var(--accent)">Today 비어 있음</span>'}</span></h4>
+      ${items.map(c=>`<div class="slot ${c.slot==="today_rock"?"tr":"rp"}"><span>${c.slot==="today_rock"?"Today":"Rising"}</span>
+        <b>${esc(nameOf(c.artist))}</b><button class="x" title="삭제" onclick="delCur('${c.id}')">✕</button></div>`).join("")}
+      </div>`;}).join("");
+  const opts = artists.map(a=>`<option value="${a.id}">${esc(nameOf(a))} (${a.slug}${a.tier==="rising"?" · Rising":""})</option>`).join("");
+  shell(`<div class="grid"><div><div class="days">${dayHtml}</div>
+      <p class="muted" style="margin-top:10px">앱에는 날짜가 된 큐레이션만 보입니다. 1~2주치를 미리 편성해 두세요.</p></div>
+    <form class="side" id="cf"><h3>큐레이션 추가</h3>
+      <div class="row2"><div><label>날짜</label><input type="date" name="curate_date" value="${from}" min="${from}" required></div>
+        <div><label>코너</label><select name="slot"><option value="today_rock">Today's Rock</option><option value="rising_pick">Rising Pick</option></select></div></div>
+      <label>아티스트</label><select name="artist_id" required>${opts}</select>
+      <label>한 줄 소개</label><input name="headline" required placeholder="예: 거친 기타와 서정적인 멜로디">
+      <label>추천 이유 <span class="muted">(선택)</span></label><textarea name="description" placeholder="예: 입문 앨범은 정규 1집"></textarea>
+      <label>테마 <span class="muted">(선택)</span></label><input name="theme" placeholder="예: 90년대 그런지">
+      <button class="primary" style="width:100%;margin-top:16px">추가</button></form></div>`);
+  document.getElementById("cf").onsubmit = async e => {
+    e.preventDefault(); const f = Object.fromEntries(new FormData(e.target));
+    const same = list.filter(c=>c.curate_date===f.curate_date && c.slot===f.slot);
+    const row = {...f, description:f.description||null, theme:f.theme||null, sort_order: same.length+1};
+    try { await api.addCuration(row); toast("편성했습니다"); renderCuration(); } catch(x){ toast("실패: "+x.message); }
+  };
+}
+async function delCur(id){ if (!confirm("이 큐레이션을 삭제할까요?")) return; try { await api.deleteCuration(id); toast("삭제했습니다"); renderCuration(); } catch(e){ toast("실패: "+e.message); } }
+
+// ---- 승격 후보 --------------------------------------------------------------
+async function renderPromo(){
+  const list = await api.promotions();
+  shell(list.length ? list.map(a => {
+    const albums = (a.releases||[]).filter(r=>r.type==="album");
+    return `<div class="card"><div style="display:flex;align-items:center;gap:10px">
+      <span class="pill" style="background:var(--rising);color:#111">Rising</span><b style="font-size:16px">${esc(nameOf(a))}</b><span class="muted">${a.slug}</span>
+      <div class="spacer"></div><button class="ghost" onclick="dismissPromo('${a.id}')">보류</button>
+      <button class="primary" onclick="promote('${a.id}')">정식 아티스트로 승격</button></div>
+      <p class="muted" style="margin-top:8px">정규앨범: ${albums.map(r=>`「${esc(r.title)}」 ${r.release_date||""}`).join(", ")||"-"}</p></div>`;
+  }).join("") + `<p class="muted">승격하면 탐색의 국내 목록으로 옮겨집니다. 템플릿 시트의 등급도 official로 바꿔야 다음 업로드 때 되돌아가지 않습니다.</p>`
+  : `<div class="empty">승격 후보가 없습니다<br><span class="muted">Rising 아티스트에 정규앨범이 등록되면 자동으로 올라옵니다.</span></div>`);
+}
+async function promote(id){ try { await api.promote(id); toast("정식 아티스트로 승격했습니다"); go("promo"); } catch(e){ toast("실패: "+e.message); } }
+async function dismissPromo(id){ try { await api.dismissPromotion(id); toast("보류했습니다"); go("promo"); } catch(e){ toast("실패: "+e.message); } }
+
+// ---- 제보 --------------------------------------------------------------------
+async function renderReports(){
+  const list = await api.reports();
+  shell(list.length ? list.map(r => `<div class="card"><div class="muted">${ago(r.created_at)} · ${esc(nameOf(r.artist))} · ${esc(r.target||"기타")}</div>
+      <p style="margin:6px 0 10px">${esc(r.message)}</p>
+      <div style="display:flex;gap:8px"><input id="note-${r.id}" placeholder="처리 메모 (선택)">
+      <button class="primary" onclick="closeRep('${r.id}','resolved')">반영 완료</button><button onclick="closeRep('${r.id}','dismissed')">무시</button></div></div>`).join("")
+  : `<div class="empty">새 제보가 없습니다</div>`);
+}
+async function closeRep(id,status){ try { await api.closeReport(id,status,document.getElementById("note-"+id).value||null); toast("처리했습니다"); go("reports"); } catch(e){ toast("실패: "+e.message); } }
+
+boot().catch(e => { $app.innerHTML = `<div class="login"><h1>오류</h1><div class="err">${esc(e.message)}</div></div>`; });
+</script>
+</body>
+</html>
