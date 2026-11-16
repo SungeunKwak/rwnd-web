@@ -30957,7 +30957,7 @@ aM2:function aM2(){},
 pV:function pV(){this.a=$},
 beK(a){var s=null,r=A.oX(s,new A.aLD(),"/splash"),q=t.yo,p=A.b([A.W0(A.b([A.oX(new A.aLE(),s,"/")],q)),A.W0(A.b([A.oX(new A.aLF(),s,"/timeline")],q)),A.W0(A.b([A.oX(new A.aLG(),s,"/explore")],q)),A.W0(A.b([A.oX(new A.aLH(),s,"/festivals")],q)),A.W0(A.b([A.oX(new A.aLI(),s,"/my")],q))],t.uP)
 r=A.b([r,new A.uE(s,new A.aLJ(),s,A.bgA(),p,new A.bk(s,t.al),s,A.b9C(p),s),A.oX(new A.aLK(),s,"/artist/:slug"),A.oX(new A.aLL(),s,"/festival/:id")],q)
-return A.b5K(!1,s,s,s,s,"/splash",s,s,s,!1,s,!0,s,!1,new A.Ym(new A.aqk(r,A.bgB(),5)))},
+return A.b5K(!1,s,s,s,s,"/",s,s,s,!1,s,!0,s,!1,new A.Ym(new A.aqk(r,A.bgB(),5)))},
 aLD:function aLD(){},
 aLJ:function aLJ(){},
 aLE:function aLE(){},
@@ -107372,7 +107372,7 @@ ag(){return new A.a2T()}}
 A.a2T.prototype={
 I(a){var s,r=this,q=A.aZh(B.ah),p=A.aZh(B.aj),o=r.ghy().dm($.aNi(),t.YX),n=r.w
 if(n===$){r.a.toString
-s=A.beK(!0)
+s=A.beK(!1)
 r.w!==$&&A.ag()
 r.w=s
 n=s}return new A.Ey(n,"RWND",q,p,o,!1,null)}}
