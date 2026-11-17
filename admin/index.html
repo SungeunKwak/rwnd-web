@@ -115,11 +115,12 @@ function supaApi(cfg){
     async logout(){ await sb.auth.signOut(); },
     async isAdmin(){ return ok(await sb.rpc("is_admin")); },
     async counts(){
-      const [q,p,r] = await Promise.all([
+      const [q,p,r,iq] = await Promise.all([
         sb.from("news_items").select("id",{count:"exact",head:true}).eq("status","pending"),
         sb.from("artists").select("id",{count:"exact",head:true}).eq("promotion_pending",true),
-        sb.from("user_reports").select("id",{count:"exact",head:true}).eq("status","open")]);
-      return {queue:q.count||0, promo:p.count||0, reports:r.count||0};
+        sb.from("user_reports").select("id",{count:"exact",head:true}).eq("status","open"),
+        sb.from("inquiries").select("id",{count:"exact",head:true}).eq("status","new")]);  // 008 마이그레이션 전이면 0
+      return {queue:q.count||0, promo:p.count||0, reports:r.count||0, inquiries:iq.count||0};
     },
     async queue(){ return ok(await sb.from("v_review_queue").select("*").limit(200)); },
     async recent(){ return ok(await sb.from("news_items").select("id,title,title_ko,category,status,reviewed_at").neq("status","pending").not("reviewed_at","is",null).order("reviewed_at",{ascending:false}).limit(15)); },
@@ -137,6 +138,8 @@ function supaApi(cfg){
     async promotions(){ return ok(await sb.from("artists").select("id,slug,name,name_ko,tier,releases(title,type,release_date)").eq("promotion_pending",true)); },
     async promote(id){ ok(await sb.from("artists").update({tier:"official"}).eq("id",id)); },
     async dismissPromotion(id){ ok(await sb.from("artists").update({promotion_pending:false}).eq("id",id)); },
+    async inquiries(){ return ok(await sb.from("inquiries").select("*").eq("status","new").order("created_at")); },
+    async closeInquiry(id){ ok(await sb.from("inquiries").update({status:"done"}).eq("id",id)); },
     async reports(){ return ok(await sb.from("user_reports").select("*, artist:artists(name,name_ko,slug)").eq("status","open").order("created_at")); },
     async closeReport(id,status,admin_note){ ok(await sb.from("user_reports").update({status,admin_note,resolved_at:new Date().toISOString()}).eq("id",id)); },
   };
@@ -174,6 +177,8 @@ function demoApi(){
     async promotions(){ return wait(A.filter(a=>a.promotion_pending).map(a=>({...a,releases:[{title:"첫 EP",type:"ep",release_date:"2025-03-01"},{title:"첫 정규",type:"album",release_date:"2026-11-01"}]}))); },
     async promote(id){ const a = A.find(x=>x.id===id); a.tier="official"; a.promotion_pending=false; return wait(); },
     async dismissPromotion(id){ A.find(x=>x.id===id).promotion_pending=false; return wait(); },
+    async inquiries(){ return []; },
+    async closeInquiry(){},
     async reports(){ return wait(reports.filter(r=>r.status==="open")); },
     async closeReport(id,status){ reports.find(r=>r.id===id).status = status; return wait(); },
   };
@@ -231,7 +236,7 @@ function shell(body){
   const c = state.counts, tab = (id,label,n) =>
     `<button class="tab ${state.tab===id?"on":""}" onclick="go('${id}')">${label}${n===undefined?"":`<span class="cnt ${n?"":"zero"}">${n}</span>`}</button>`;
   $app.innerHTML = `<div class="bar"><div class="logo">RW<b>N</b>D</div>
-    ${tab("queue","검수 큐",c.queue)}${tab("manual","링크로 소식 등록")}${tab("curation","큐레이션 편성")}${tab("promo","승격 후보",c.promo)}${tab("reports","제보",c.reports)}
+    ${tab("queue","검수 큐",c.queue)}${tab("manual","링크로 소식 등록")}${tab("curation","큐레이션 편성")}${tab("promo","승격 후보",c.promo)}${tab("reports","제보",c.reports)}${tab("inquiries","문의",c.inquiries)}
     <div class="spacer"></div>${DEMO?'<span class="demo">예시 데이터</span>':""}<span class="who">${esc(state.user?.email||"")}</span>
     <button class="ghost" onclick="api.logout().then(()=>location.reload())">로그아웃</button></div><main id="main">${body}</main>`;
 }
@@ -239,7 +244,7 @@ function shell(body){
 async function go(tab){
   state.tab = tab;
   state.counts = await api.counts();
-  ({queue:renderQueue, manual:renderManual, curation:renderCuration, promo:renderPromo, reports:renderReports})[tab]();
+  ({queue:renderQueue, manual:renderManual, curation:renderCuration, promo:renderPromo, reports:renderReports, inquiries:renderInquiries})[tab]();
 }
 
 // ---- 검수 큐 --------------------------------------------------------------
@@ -474,6 +479,18 @@ async function renderReports(){
   : `<div class="empty">새 제보가 없습니다</div>`);
 }
 async function closeRep(id,status){ try { await api.closeReport(id,status,document.getElementById("note-"+id).value||null); toast("처리했습니다"); go("reports"); } catch(e){ toast("실패: "+e.message); } }
+
+// ---- 문의 (앱 MY > 문의) -----------------------------------------------------------
+const INQ_LABEL = {artist_request:"아티스트 추가 신청", suggestion:"건의하기", general:"일반 문의", ad:"광고 문의"};
+async function renderInquiries(){
+  let list = [];
+  try { list = await api.inquiries(); } catch(e){ return shell(`<div class="empty">문의 테이블이 아직 없습니다 (db/migrations/008 실행 필요)</div>`); }
+  shell(list.length ? list.map(r => `<div class="card"><div class="muted">${ago(r.created_at)} · ${esc(INQ_LABEL[r.kind]||r.kind)}${r.contact?` · 연락처: ${esc(r.contact)}`:""}</div>
+      <p style="margin:6px 0 10px;white-space:pre-wrap">${esc(r.message)}</p>
+      <button class="primary" onclick="closeInq('${r.id}')">처리 완료</button></div>`).join("")
+  : `<div class="empty">새 문의가 없습니다</div>`);
+}
+async function closeInq(id){ try { await api.closeInquiry(id); toast("처리했습니다"); state.counts = await api.counts(); go("inquiries"); } catch(e){ toast("실패: "+e.message); } }
 
 boot().catch(e => { $app.innerHTML = `<div class="login"><h1>오류</h1><div class="err">${esc(e.message)}</div></div>`; });
 </script>
