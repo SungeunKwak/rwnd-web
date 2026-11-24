@@ -116,13 +116,14 @@ function supaApi(cfg){
     async isAdmin(){ return ok(await sb.rpc("is_admin")); },
     async counts(){
       const [q,p,r,iq] = await Promise.all([
-        sb.from("news_items").select("id",{count:"exact",head:true}).eq("status","pending"),
+        sb.from("news_items").select("id",{count:"exact",head:true}).eq("status","pending").lte("published_at", new Date().toISOString()),
         sb.from("artists").select("id",{count:"exact",head:true}).eq("promotion_pending",true),
         sb.from("user_reports").select("id",{count:"exact",head:true}).eq("status","open"),
         sb.from("inquiries").select("id",{count:"exact",head:true}).eq("status","new")]);  // 008 마이그레이션 전이면 0
       return {queue:q.count||0, promo:p.count||0, reports:r.count||0, inquiries:iq.count||0};
     },
-    async queue(){ return ok(await sb.from("v_review_queue").select("*").limit(200)); },
+    // 발매 예정 신보처럼 날짜가 아직 오지 않은 소식은 검수 큐에 보이지 않음 (발매일이 되면 수집기가 자동으로 노출)
+    async queue(){ return ok(await sb.from("v_review_queue").select("*").lte("published_at", new Date().toISOString()).limit(200)); },
     async recent(){ return ok(await sb.from("news_items").select("id,title,title_ko,category,status,reviewed_at").neq("status","pending").not("reviewed_at","is",null).order("reviewed_at",{ascending:false}).limit(15)); },
     async updateNews(id,fields){ ok(await sb.from("news_items").update(fields).eq("id",id)); },
     async addNews(row, artistIds){
